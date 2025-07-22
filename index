@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Furever Pet Safety Release Form</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: #f9f9f9;
+            padding: 30px;
+            max-width: 700px;
+            margin: auto;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            color: #444;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            /* 确保 row 占满容器宽度 */
+            gap: 30px;
+            /* 两个输入框之间的间距 */
+            margin-top: 25px;
+        }
+
+        .field {
+            flex: 1;
+            /* 关键：让两个框平分 row 的空间 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        input,
+        select {
+            width: 100%;
+            /* 填满 field */
+            box-sizing: border-box;
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+
+        p {
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-top: 10px;
+            width: 100%;
+            height: 150px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: #5c85d6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #466bbf;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Furever Pet Safety Release Form</h2>
+
+    <div class="row">
+        <div class="field">
+            <label>Owner’s Name:</label>
+            <input type="text" id="owner" value="Sujana" />
+        </div>
+        <div class="field">
+            <label>Pet’s Name:</label>
+            <input type="text" id="pet" value="Misu" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <label>Contact Number:</label>
+            <input type="text" id="contact" value="385-295-2982" />
+        </div>
+        <div class="field">
+            <label>Groomer:</label>
+            <select id="groomer">
+                <option>Snowy</option>
+                <option>Kelly</option>
+                <option>David</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <label>Service Date:</label>
+            <input type="datetime-local" id="date" />
+        </div>
+        <div class="field">
+            <label>Today’s Service:</label>
+            <select id="service">
+                <option>Basic Bath & Full Body Haircut (S)</option>
+                <option>Nail Trim & Ear Cleaning</option>
+                <option>Teeth Brushing & Deshedding</option>
+            </select>
+        </div>
+    </div>
+
+
+    <p><strong>Your Pet is IMPORTANT to Us!</strong><br><br>
+        Because we care about your pet’s safety, we want to assure you that every precaution will be taken to provide a
+        safe and stress-free grooming experience for your pet. Due to the intimate nature of the grooming process, or a
+        pet’s tolerance level for stress, strangers, or handling, some pets can become anxious or reactive during the
+        grooming service.<br><br>
+        If we determine that continuing the grooming service would present a threat to your dog’s emotional or physical
+        health, and/or the safety of groomer completing the service, we will discontinue today’s service and contact you
+        immediately.<br><br>
+        We will take every precaution necessary to complete the grooming service safely and humanely including the
+        proper use of common industry safety equipment such as grooming loops, muzzles, and restraints.<br><br>
+        I hereby grant permission to this grooming establishment to utilize proper restraints for the health and safety
+        of my pet and my grooming service provider during today’s grooming service. I understand and agree that if the
+        grooming establishment deems it unsafe or unhealthy to continue for the pet or the groomer, the grooming
+        establishment will end today’s service and I will be responsible for any services rendered.
+    </p>
+
+    <label>Signature By Owner:</label>
+    <canvas id="sig"></canvas>
+
+    <button onclick="downloadPDF()">Download PDF</button>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        const canvas = document.getElementById("sig");
+        function resizeCanvas() {
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext("2d").scale(ratio, ratio);
+}
+resizeCanvas(); // 初始调用一次
+window.addEventListener("resize", resizeCanvas);
+
+        const sigPad = new SignaturePad(canvas, {
+            penColor: "black",
+            backgroundColor: "white"
+        });
+        canvas.getContext("2d").scale(window.devicePixelRatio, window.devicePixelRatio);
+
+
+        function downloadPDF() {
+            const pdf = new jsPDF();
+
+            // 标题：居中、加粗、大字号
+            const title = "Furever Pet Safety Release Form";
+            pdf.setFontSize(18);
+            pdf.setFont("helvetica", "bold");
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const textWidth = pdf.getTextWidth(title);
+            const centerX = (pageWidth - textWidth) / 2;
+            pdf.text(title, centerX, 20);
+
+            pdf.setFontSize(14);
+            let y = 40; // 初始Y位置
+
+            // === 字段区域 ===
+            const fieldSpacingY = 10;
+            const leftX = 20;
+            const rightX = 110;
+
+            const drawField = (label, value, x, y) => {
+                pdf.setFont("helvetica", "bold");
+                pdf.text(${label}, x, y);
+                pdf.setFont("helvetica", "normal");
+                pdf.text(value, x + pdf.getTextWidth(label) + 2, y);
+            };
+
+            drawField("Owner:", owner.value, leftX, y);
+            drawField("Pet:", pet.value, rightX, y);
+            y += fieldSpacingY;
+
+            drawField("Contact:", contact.value, leftX, y);
+            drawField("Groomer:", groomer.value, rightX, y);
+            y += fieldSpacingY;
+
+            // 日期格式转换
+            let formattedDate = "Invalid Date";
+            try {
+                const d = new Date(date.value);
+                if (!isNaN(d)) {
+                    formattedDate = d.toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
+                }
+            } catch (e) { }
+
+            drawField("Service Date:", formattedDate, leftX, y);
+            drawField("Service:", service.value, rightX, y);
+            y += 15;
+
+            // === 段落标题 ===
+            pdf.setFont("helvetica", "bold");
+            pdf.text("Your Pet is IMPORTANT to Us!", leftX, y);
+            y += 8;
+
+            // === 段落内容 ===
+            const disclaimer = 
+Because we care about your pet’s safety, we want to assure you that every precaution will be taken to provide a safe and stress-free grooming experience for your pet. Due to the intimate nature of the grooming process, or a pet’s tolerance level for stress, strangers, or handling, some pets can become anxious or reactive during the grooming service.
+
+If we determine that continuing the grooming service would present a threat to your dog’s emotional or physical health, and/or the safety of groomer completing the service, we will discontinue today’s service and contact you immediately.
+
+We will take every precaution necessary to complete the grooming service safely and humanely including the proper use of common industry safety equipment such as grooming loops, muzzles, and restraints.
+
+I hereby grant permission to this grooming establishment to utilize proper restraints for the health and safety of my pet and my grooming service provider during today’s grooming service. I understand and agree that if the grooming establishment deems it unsafe or unhealthy to continue for the pet or the groomer, the grooming establishment will end today’s service and I will be responsible for any services rendered.
+  .trim();
+
+            pdf.setFont("helvetica", "normal");
+            pdf.setLineHeightFactor(1.5);
+            const lines = pdf.splitTextToSize(disclaimer, 170);
+            pdf.text(lines, leftX, y);
+            y += lines.length * 7 + 10; // 留出签名区域空白
+
+            // === 签名图像 ===
+            const imgData = sigPad.toDataURL();
+            pdf.addImage(imgData, 'PNG', leftX, y, 120, 50);
+
+            const blob = pdf.output("blob");
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "Furever_Pet_Release.pdf";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+
+        }
+
+    </script>
+</body>
+
+</html>
