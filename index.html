@@ -155,20 +155,23 @@
     <script>
         const { jsPDF } = window.jspdf;
         const canvas = document.getElementById("sig");
-        function resizeCanvas() {
+
+function resizeCanvas() {
   const ratio = Math.max(window.devicePixelRatio || 1, 1);
   canvas.width = canvas.offsetWidth * ratio;
   canvas.height = canvas.offsetHeight * ratio;
-  canvas.getContext("2d").scale(ratio, ratio);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
-resizeCanvas(); // 初始调用一次
+
+resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
-        const sigPad = new SignaturePad(canvas, {
-            penColor: "black",
-            backgroundColor: "white"
-        });
-        canvas.getContext("2d").scale(window.devicePixelRatio, window.devicePixelRatio);
+const sigPad = new SignaturePad(canvas, {
+  penColor: "black",
+  backgroundColor: "white"
+});
+
 
 
         function downloadPDF() {
